@@ -6,7 +6,12 @@ namespace ConsoleApplication
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            ChessBoard board = new ChessBoard();
+            
+            foreach (ChessPiece piece in board.pieces)
+            {
+                Console.WriteLine(piece.Position.X + ":" + piece.Position.Y + " - " + piece.ToString());   
+            }
         }
     }
 }
