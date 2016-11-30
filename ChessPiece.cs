@@ -1,24 +1,11 @@
 public abstract class ChessPiece
 {
-    protected const int PLAYER_WHITE = 0;
-    protected const int PLAYER_BLACK = 1;
-
-    public int Player;
     public bool Captured = false;
     protected bool HasMoved = false;
 
     public ChessBoardCell Position;
 
-    public ChessMove[] GetMoves()
-    {
-        if(Captured)
-            return new ChessMove[0];
-        else
-            // TODO: Remove all moves that aren't legal
-            return GetAllMoves();
-    }
-
-    protected abstract ChessMove[] GetAllMoves();
+    public abstract ChessMove[] GetMoves(int _pieceID);
 
     public bool Move(ChessMove move)
     {
@@ -31,14 +18,6 @@ public abstract class ChessPiece
         else
             return false;
     }
-
-    protected int GetOpponent()
-    {
-        if(Player == PLAYER_WHITE)
-            return PLAYER_BLACK;
-        else
-            return PLAYER_WHITE;
-    }
 }
 
 public class Pawn : ChessPiece
@@ -46,11 +25,11 @@ public class Pawn : ChessPiece
     private int PawnMoveY;
     private int PawnMoveDoubleY;
 
-    public Pawn()
+    public Pawn(int _player)
     {
-        if(Player == PLAYER_WHITE)
+        if(_player == ChessPlayer.White)
             PawnMoveY = 1;
-        else if(Player == PLAYER_BLACK)
+        else if(_player == ChessPlayer.Black)
             PawnMoveY = -1;
         else
             PawnMoveY = 0;
@@ -58,55 +37,24 @@ public class Pawn : ChessPiece
         PawnMoveDoubleY = PawnMoveY * 2;
     }
 
-    protected override ChessMove[] GetAllMoves()
+    public override ChessMove[] GetMoves(int _pieceID)
     {
         ChessMove[] movesAll = new ChessMove[(HasMoved ? 3 : 4)];
 
-        movesAll[0] = new ChessMove(Position, -1, PawnMoveY, true);
-        movesAll[1] = new ChessMove(Position, 0, PawnMoveY, false);
-        movesAll[2] = new ChessMove(Position, 1, PawnMoveY, true);
+        movesAll[0] = new ChessMove(_pieceID, Position, -1, PawnMoveY, ChessMoveType.PawnAttack);
+        movesAll[1] = new ChessMove(_pieceID, Position, 0, PawnMoveY);
+        movesAll[2] = new ChessMove(_pieceID, Position, 1, PawnMoveY, ChessMoveType.PawnAttack);
 
         if(!HasMoved)
-            movesAll[4] = new ChessMove(Position, 0, 2 * PawnMoveDoubleY, false, true);
+            movesAll[3] = new ChessMove(_pieceID, Position, 0, PawnMoveDoubleY, ChessMoveType.PawnDouble);
 
-        int movesLegalCount = 0;
-
-        for (int i = 0; i < movesAll.Length; i++)
-        {
-            if(/* TODO: Condition */)
-            {
-                movesAll[i].Legal = true;
-                movesLegalCount++;
-            }
-            else
-                movesAll[i].Legal = false;
-        }
-
-        if(movesLegalCount == movesAll.Length)
-            return movesAll;
-
-        ChessMove[] movesLegal = new ChessMove[movesLegalCount];
-        int movesLegalIndex = 0;
-
-        foreach (ChessMove move in movesAll)
-        {
-            if(move.Legal)
-            {
-                movesLegal[movesLegalIndex] = move;
-                movesLegalIndex++;
-
-                if(movesLegalIndex >= movesLegalCount)
-                    break;
-            }
-        }
-
-        return movesLegal;
+        return movesAll;
     }
 }
 
 public class Rook : ChessPiece
 {
-    protected override ChessMove[] GetAllMoves()
+    public override ChessMove[] GetMoves(int _pieceID)
     {
         return new ChessMove[0];
     }
@@ -114,7 +62,7 @@ public class Rook : ChessPiece
 
 public class Knight : ChessPiece
 {
-    protected override ChessMove[] GetAllMoves()
+    public override ChessMove[] GetMoves(int _pieceID)
     {
         return new ChessMove[0];
     }
@@ -122,7 +70,7 @@ public class Knight : ChessPiece
 
 public class Bishop : ChessPiece
 {
-    protected override ChessMove[] GetAllMoves()
+    public override ChessMove[] GetMoves(int _pieceID)
     {
         return new ChessMove[0];
     }
@@ -130,7 +78,7 @@ public class Bishop : ChessPiece
 
 public class Queen : ChessPiece
 {
-    protected override ChessMove[] GetAllMoves()
+    public override ChessMove[] GetMoves(int _pieceID)
     {
         return new ChessMove[0];
     }
@@ -138,7 +86,7 @@ public class Queen : ChessPiece
 
 public class King : ChessPiece
 {
-    protected override ChessMove[] GetAllMoves()
+    public override ChessMove[] GetMoves(int _pieceID)
     {
         return new ChessMove[0];
     }
