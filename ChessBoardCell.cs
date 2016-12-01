@@ -21,9 +21,15 @@
                 _cell1.Rank == _cell2.Rank);
     }
 
+    public void Move(ChessMoveRelative relMove)
+    {
+        File += relMove.Files;
+        Rank += relMove.Ranks;
+    }
+
     public override string ToString()
     {
-        return string.Format("{0}:{1}",
+        return string.Format("{0}{1}",
                              (char)('a' + File),
                              Rank + 1);
     }

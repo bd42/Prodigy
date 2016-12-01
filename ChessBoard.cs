@@ -1,15 +1,16 @@
 public class ChessBoard
 {
     public ChessPiece[,] Cells;
-    public ChessPiece[,] Pieces;
+    public ChessPiece[] Pieces;
     public int PlayerOnTurn;
-    
-    private ChessMove LastMove;
+
+    public ChessMoveAbsolute[] MovesAvailable;
+    public ChessMoveAbsolute LastMove;
 
     public ChessBoard()
     {
         Cells = new ChessPiece[8, 8];
-        Pieces = new ChessPiece[2, 16];
+        Pieces = new ChessPiece[32];
         PlayerOnTurn = ChessPlayer.White;
         LastMove = null;
 
@@ -23,22 +24,27 @@ public class ChessBoard
 
         for (int iPlayer = 0; iPlayer < 2; iPlayer++)
         {
+            int iPlayerOffset = iPlayer * 16;
+
             for (int iPiece = 0; iPiece < 16; iPiece++)
             {
+                // Calculate piece rank
                 if (iPlayer == 0)
                     rank = (iPiece / 8);
                 else
                     rank = 7 - (iPiece / 8);
 
+                // Calculate piece file
                 file = iPiece % 8;
 
-                Pieces[iPlayer, iPiece] = GetDefaulPiece(file, rank);
-                Pieces[iPlayer, iPiece].Position = new ChessBoardCell(file, rank);
+                // Get the type of the piece corresponding to the specified location
+                Pieces[iPlayerOffset + iPiece] = GetDefaulPiece(file, rank, iPlayer);
+                Pieces[iPlayerOffset + iPiece].Position = new ChessBoardCell(file, rank);
             }
         }
     }
 
-    private ChessPiece GetDefaulPiece(int file, int rank)
+    private ChessPiece GetDefaulPiece(int file, int rank, int player)
     {
         switch(rank)
         {
@@ -48,29 +54,28 @@ public class ChessBoard
                 {
                     case 0:
                     case 7:
-                        return new PieceRook();
+                        return new PieceRook(player);
 
                     case 1:
                     case 6:
-                        return new PieceKnight();
+                        return new PieceKnight(player);
 
                     case 2:
                     case 5:
-                        return new PieceBishop();
+                        return new PieceBishop(player);
 
                     case 3:
-                        return new PieceQueen();
+                        return new PieceQueen(player);
                     case 4:
-                        return new PieceKing();
+                        return new PieceKing(player);
 
                     default:
                         return new PieceNone();
                 }
 
             case 1:
-                return new PiecePawn(ChessPlayer.White);
             case 6:
-                return new PiecePawn(ChessPlayer.Black);
+                return new PiecePawn(player);
 
             default:
                 return new PieceNone();
@@ -85,14 +90,13 @@ public class ChessBoard
                 Cells[iFile, iRank] = new PieceNone();
 
         // Fill the board with non-captured pieces
-        for (int iPlayer = 0; iPlayer < 2; iPlayer++)
-            for (int iPiece = 0; iPiece < 16; iPiece++)
-            {
-                ChessPiece piece = Pieces[iPlayer, iPiece];
+        for (int iPiece = 0; iPiece < Pieces.Length; iPiece++)
+        {
+            ChessPiece piece = Pieces[iPiece];
 
-                if (!piece.Captured)
-                    Cells[piece.Position.File, piece.Position.Rank] = piece;
-            }
+            if (!piece.Captured)
+                Cells[piece.Position.File, piece.Position.Rank] = piece;
+        }
     }
 
     /*public ChessMove[] GetMoves()
@@ -173,6 +177,26 @@ public class ChessBoard
             return ChessPlayer.Black;
         else
             return ChessPlayer.White;
+    }
+
+    public bool MoveValidate(ChessPiece piece, ChessMoveRelative relMove)
+    {
+        if (piece.Captured)
+            return false;
+
+        ChessBoardCell target = new ChessBoardCell(piece.Position.File + relMove.Files,
+                                                   piece.Position.Rank + relMove.Ranks);
+
+        if (target.File < 0 ||
+            target.File > 7 ||
+            target.Rank < 0 ||
+            target.Rank > 7)
+            return false;
+
+        if (Cells[target.File, target.Rank].Player == piece.Player)
+            return false;
+
+        return true;
     }
 
     public override string ToString()
