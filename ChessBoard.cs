@@ -1,11 +1,18 @@
 public class ChessBoard
 {
-    public ChessPiece[,] pieces = new ChessPiece[2, 16];
-    private ChessMove lastMove = new ChessMove();
-    public int onTurn = ChessPlayer.White;
+    public ChessPiece[,] Cells;
+    public ChessPiece[,] Pieces;
+    public int PlayerOnTurn;
+    
+    private ChessMove LastMove;
 
     public ChessBoard()
     {
+        Cells = new ChessPiece[8, 8];
+        Pieces = new ChessPiece[2, 16];
+        PlayerOnTurn = ChessPlayer.White;
+        LastMove = null;
+
         LoadDefaultPositions();
     }
 
@@ -14,19 +21,19 @@ public class ChessBoard
         int file = 0;
         int rank = 0;
 
-        for(int i1 = 0; i1 < 2; i1++)
+        for (int iPlayer = 0; iPlayer < 2; iPlayer++)
         {
-            for(int i2 = 0; i2 < 16; i2++)
+            for (int iPiece = 0; iPiece < 16; iPiece++)
             {
-                if(i1 == 0)
-                    rank = 1 + (i2 / 8);
+                if (iPlayer == 0)
+                    rank = (iPiece / 8);
                 else
-                    rank = 8 - (i2 / 8);
+                    rank = 7 - (iPiece / 8);
 
-                file = (i2 % 8) + 1;
+                file = iPiece % 8;
 
-                pieces[i1, i2] = GetDefaulPiece(file, rank);
-                pieces[i1, i2].Position = new ChessBoardCell(file, rank);
+                Pieces[iPlayer, iPiece] = GetDefaulPiece(file, rank);
+                Pieces[iPlayer, iPiece].Position = new ChessBoardCell(file, rank);
             }
         }
     }
@@ -35,39 +42,60 @@ public class ChessBoard
     {
         switch(rank)
         {
-            case 1:
-            case 8:
+            case 0:
+            case 7:
                 switch(file)
                 {
+                    case 0:
+                    case 7:
+                        return new PieceRook();
+
                     case 1:
-                    case 8:
-                        return new Rook();
+                    case 6:
+                        return new PieceKnight();
 
                     case 2:
-                    case 7:
-                        return new Knight();
+                    case 5:
+                        return new PieceBishop();
 
                     case 3:
-                    case 6:
-                        return new Bishop();
-
+                        return new PieceQueen();
                     case 4:
-                        return new Queen();
+                        return new PieceKing();
 
-                    //case 5:
                     default:
-                        return new King();
+                        return new PieceNone();
                 }
 
-            case 2:
-                return new Pawn(ChessPlayer.White);
-            //case 7:
+            case 1:
+                return new PiecePawn(ChessPlayer.White);
+            case 6:
+                return new PiecePawn(ChessPlayer.Black);
+
             default:
-                return new Pawn(ChessPlayer.Black);
+                return new PieceNone();
         }
     }
 
-    public ChessMove[] GetMoves()
+    public void UpdateCells()
+    {
+        // Clear the board
+        for (int iRank = 0; iRank < 8; iRank++)
+            for (int iFile = 0; iFile < 8; iFile++)
+                Cells[iFile, iRank] = new PieceNone();
+
+        // Fill the board with non-captured pieces
+        for (int iPlayer = 0; iPlayer < 2; iPlayer++)
+            for (int iPiece = 0; iPiece < 16; iPiece++)
+            {
+                ChessPiece piece = Pieces[iPlayer, iPiece];
+
+                if (!piece.Captured)
+                    Cells[piece.Position.File, piece.Position.Rank] = piece;
+            }
+    }
+
+    /*public ChessMove[] GetMoves()
     {
         ChessMove[] movesTemp = new ChessMove[1024];
         int movesCount = 0;
@@ -76,7 +104,7 @@ public class ChessBoard
         for (int i1 = 0; i1 < 16; i1++)
         {
             // Get all the possible moves for all allied pieces
-            ChessMove[] movesPiece = pieces[onTurn, i1].GetMoves(i1);
+            ChessMove[] movesPiece = Pieces[PlayerOnTurn, i1].GetMoves(i1);
 
             // Determine which moves are legal
             for (int i2 = 0; i2 < movesPiece.Length; i2++)
@@ -95,25 +123,25 @@ public class ChessBoard
                 for(int i3 = 0; isLegal && !isValidPawnAttack && i3 < 16; i3++)
                 {
                     // Pawn
-                    if(pieces[onTurn, i1].GetType() == typeof(Pawn))
+                    if(Pieces[PlayerOnTurn, i1].GetType() == typeof(Pawn))
                     {
                         // Pawn can't attack without an attack move
-                        if(movesPiece[i2].Type != ChessMoveType.PawnAttack && movesPiece[i2].Target.Interferes(pieces[GetOpponent(), i3].Position))
+                        if(movesPiece[i2].Type != ChessMoveType.PawnAttack && movesPiece[i2].Target.Interferes(Pieces[GetOpponent(), i3].Position))
                             isLegal = false;
 
                         if(movesPiece[i2].Type == ChessMoveType.PawnAttack)
                         {
                             // Classic attack
-                            if(movesPiece[i2].Target.Interferes(pieces[GetOpponent(), i3].Position) ||
+                            if(movesPiece[i2].Target.Interferes(Pieces[GetOpponent(), i3].Position) ||
                             // En passant
-                            (lastMove.Type == ChessMoveType.PawnDouble && movesPiece[i2].Target.File == lastMove.Target.File &&
-                            movesPiece[i2].Target.Rank == (onTurn == ChessPlayer.White ? 6 : 3)))
+                            (LastMove.Type == ChessMoveType.PawnDouble && movesPiece[i2].Target.File == LastMove.Target.File &&
+                            movesPiece[i2].Target.Rank == (PlayerOnTurn == ChessPlayer.White ? 6 : 3)))
                                 isValidPawnAttack = true;
                         }
                     }
                     
                     // Move is illegal if there's an allied pieces in target position
-                    if(isLegal && movesPiece[i2].Target.Interferes(pieces[onTurn, i3].Position))
+                    if(isLegal && movesPiece[i2].Target.Interferes(Pieces[PlayerOnTurn, i3].Position))
                         isLegal = false;
                 }
 
@@ -137,21 +165,37 @@ public class ChessBoard
             movesLegal[i] = movesTemp[i];
 
         return movesLegal;
-    }
+    }*/
 
     private int GetOpponent()
     {
-        if(onTurn == ChessPlayer.White)
+        if (PlayerOnTurn == ChessPlayer.White)
             return ChessPlayer.Black;
         else
             return ChessPlayer.White;
+    }
+
+    public override string ToString()
+    {
+        string strBoardMatrix = string.Empty;
+
+        for (int iRank = 7; iRank >= 0; iRank--)
+        {
+            for (int iFile = 0; iFile < 8; iFile++)
+                strBoardMatrix += Cells[iFile, iRank].Symbol;
+
+            if(iRank > 0)
+                strBoardMatrix += (System.Environment.NewLine);
+        }
+
+        return strBoardMatrix;
     }
 }
 
 public class ChessBoardCell
 {
-    public int File;
-    public int Rank;
+    public int File; // X axis
+    public int Rank; // Y axis
 
     public ChessBoardCell(int _file, int _rank)
     {
@@ -159,46 +203,50 @@ public class ChessBoardCell
         Rank = _rank;
     }
 
-    public bool Interferes(ChessBoardCell _cell)
+    public bool Equals(ChessBoardCell _cell)
     {
-        return (File == _cell.File && Rank == _cell.Rank);
+        return (File == _cell.File &&
+                Rank == _cell.Rank);
+    }
+
+    public static bool Equals(ChessBoardCell _cell1, ChessBoardCell _cell2)
+    {
+        return (_cell1.File == _cell2.File &&
+                _cell1.Rank == _cell2.Rank);
+    }
+
+    public override string ToString()
+    {
+        return string.Format("{0}:{1}",
+                             (char)('a' + File),
+                             Rank + 1);
     }
 }
 
 public class ChessMove
 {
-    public int PieceID;
-    public int Type;
-
     public ChessBoardCell Origin;
     public ChessBoardCell Target;
 
     public ChessMove()
     {
-        Type = ChessMoveType.None;
+
     }
 
-    public ChessMove(int _pieceID, ChessBoardCell _origin, int _relFile, int _relRank, int _type = ChessMoveType.Default)
+    public ChessMove(ChessBoardCell _origin, int _relFile, int _relRank)
     {
-        PieceID = _pieceID;
-        Type = _type;
-
         Origin = _origin;
         Target = new ChessBoardCell(Origin.File + _relFile, Origin.Rank + _relRank);
     }
-}
 
-public static class ChessMoveType
-{
-    public const int None = -1;
-    public const int Default = 0;
-    public const int PawnAttack = 1;
-    public const int PawnDouble = 2;
-    public const int Castling = 3;
+    public override string ToString()
+    {
+        return string.Format("{0} -> {1}", Origin, Target);
+    }
 }
 
 public static class ChessPlayer
 {
-    public const int White = 0;
-    public const int Black = 1;
+    public static int White = 0;
+    public static int Black = 1;
 }
