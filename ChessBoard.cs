@@ -182,71 +182,17 @@ public class ChessBoard
         for (int iRank = 7; iRank >= 0; iRank--)
         {
             for (int iFile = 0; iFile < 8; iFile++)
+            {
                 strBoardMatrix += Cells[iFile, iRank].Symbol;
 
+                if (iFile < 7)
+                    strBoardMatrix += ' ';
+            }
+
             if(iRank > 0)
-                strBoardMatrix += (System.Environment.NewLine);
+                strBoardMatrix += System.Environment.NewLine;
         }
 
         return strBoardMatrix;
     }
-}
-
-public class ChessBoardCell
-{
-    public int File; // X axis
-    public int Rank; // Y axis
-
-    public ChessBoardCell(int _file, int _rank)
-    {
-        File = _file;
-        Rank = _rank;
-    }
-
-    public bool Equals(ChessBoardCell _cell)
-    {
-        return (File == _cell.File &&
-                Rank == _cell.Rank);
-    }
-
-    public static bool Equals(ChessBoardCell _cell1, ChessBoardCell _cell2)
-    {
-        return (_cell1.File == _cell2.File &&
-                _cell1.Rank == _cell2.Rank);
-    }
-
-    public override string ToString()
-    {
-        return string.Format("{0}:{1}",
-                             (char)('a' + File),
-                             Rank + 1);
-    }
-}
-
-public class ChessMove
-{
-    public ChessBoardCell Origin;
-    public ChessBoardCell Target;
-
-    public ChessMove()
-    {
-
-    }
-
-    public ChessMove(ChessBoardCell _origin, int _relFile, int _relRank)
-    {
-        Origin = _origin;
-        Target = new ChessBoardCell(Origin.File + _relFile, Origin.Rank + _relRank);
-    }
-
-    public override string ToString()
-    {
-        return string.Format("{0} -> {1}", Origin, Target);
-    }
-}
-
-public static class ChessPlayer
-{
-    public static int White = 0;
-    public static int Black = 1;
 }
